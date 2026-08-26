@@ -1,0 +1,686 @@
+<title>The Forge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Rubik+Mono+One&family=Oswald:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap">
+<style>
+  :root{
+    --iron-950:#150f0b;
+    --iron-900:#231810;
+    --iron-800:#372820;
+    --iron-700:#4a352a;
+    --brass-300:#e9c48a;
+    --brass-500:#c1934f;
+    --brass-700:#8a6636;
+    --ember-400:#ffc24d;
+    --ember-500:#ff8a2b;
+    --ember-600:#ff5a1f;
+    --cream-100:#f6ecdd;
+    --ash-500:#a8998a;
+    --ash-700:#6f6157;
+    --danger:#ff5252;
+    --font-display:'Bungee', 'Arial Black', sans-serif;
+    --font-numeral:'Rubik Mono One', 'Courier New', monospace;
+    --font-body:'Oswald', 'Helvetica Neue', sans-serif;
+    --font-mono:'Space Mono', 'Courier New', monospace;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+
+  body{
+    background:
+      radial-gradient(120% 90% at 50% 12%, rgba(255,138,43,0.10), transparent 60%),
+      radial-gradient(140% 100% at 50% 100%, rgba(0,0,0,0.55), transparent 55%),
+      var(--iron-950);
+    color:var(--cream-100);
+    font-family:var(--font-body);
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow-x:hidden;
+    position:relative;
+  }
+
+  canvas#fx{
+    position:fixed;
+    inset:0;
+    width:100%;
+    height:100%;
+    pointer-events:none;
+    z-index:0;
+  }
+
+  #flash{
+    position:fixed;
+    inset:0;
+    background:#fff7ea;
+    opacity:0;
+    pointer-events:none;
+    z-index:5;
+  }
+  #flash.hit{ animation:flashpop .28s ease-out; }
+  @keyframes flashpop{
+    0%{opacity:.28;}
+    100%{opacity:0;}
+  }
+
+  .app{
+    position:relative;
+    z-index:1;
+    width:100%;
+    max-width:640px;
+    padding:2.5rem 1.5rem 3rem;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:1.75rem;
+  }
+
+  .eyebrow{
+    font-family:var(--font-mono);
+    font-size:.72rem;
+    letter-spacing:.32em;
+    text-transform:uppercase;
+    color:var(--brass-300);
+    opacity:.85;
+  }
+
+  h1{
+    font-family:var(--font-display);
+    font-size:clamp(2.4rem, 8vw, 3.6rem);
+    margin:0;
+    letter-spacing:.04em;
+    color:var(--cream-100);
+    text-shadow:
+      0 0 12px rgba(255,138,43,0.35),
+      0 4px 0 var(--iron-950);
+    text-wrap:balance;
+    text-align:center;
+  }
+
+  .tagline{
+    margin:-.75rem 0 0;
+    color:var(--ash-500);
+    font-size:.95rem;
+    letter-spacing:.02em;
+    text-align:center;
+    max-width:34ch;
+  }
+
+  /* ---------- furnace porthole ---------- */
+  .stage{ position:relative; }
+  .stage.shake{ animation:shake .38s cubic-bezier(.36,.07,.19,.97); }
+  @keyframes shake{
+    10%,90%{ transform:translate3d(-1px,0,0); }
+    20%,80%{ transform:translate3d(2px,-1px,0); }
+    30%,50%,70%{ transform:translate3d(-4px,2px,0); }
+    40%,60%{ transform:translate3d(4px,-1px,0); }
+  }
+
+  .furnace{
+    --fsize:clamp(230px, 62vw, 336px);
+    width:var(--fsize);
+    height:var(--fsize);
+    border-radius:50%;
+    position:relative;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:
+      radial-gradient(circle at 50% 42%, rgba(255,194,77,0.16), transparent 62%),
+      var(--iron-900);
+    box-shadow:
+      inset 0 0 0 2px var(--iron-950),
+      inset 0 0 60px rgba(0,0,0,0.65),
+      0 0 0 10px var(--iron-800),
+      0 0 0 13px var(--brass-700),
+      0 18px 40px rgba(0,0,0,0.55);
+  }
+
+  .furnace::before{
+    content:'';
+    position:absolute;
+    inset:14%;
+    border-radius:50%;
+    background:radial-gradient(circle at 50% 55%, var(--glow-core, rgba(255,90,31,0.35)) 0%, transparent 70%);
+    filter:blur(6px);
+    animation:breathe 4.2s ease-in-out infinite;
+    transition:background .4s ease;
+  }
+  @keyframes breathe{
+    0%,100%{ opacity:.6; transform:scale(1); }
+    50%{ opacity:1; transform:scale(1.06); }
+  }
+
+  .rivet{
+    position:absolute;
+    top:50%; left:50%;
+    width:10px; height:10px;
+    margin:-5px;
+    border-radius:50%;
+    background:linear-gradient(160deg, var(--brass-300), var(--brass-700));
+    box-shadow:0 1px 2px rgba(0,0,0,0.6), inset 0 0 2px rgba(0,0,0,0.5);
+    transform:rotate(var(--ang)) translateY(calc(var(--fsize) / -2 - 1px));
+  }
+
+  .readout{
+    position:relative;
+    z-index:1;
+    font-family:var(--font-numeral);
+    font-size:clamp(2.6rem, 12vw, 4.4rem);
+    font-variant-numeric:tabular-nums;
+    color:var(--num-color, var(--ember-400));
+    text-shadow:0 0 18px var(--num-glow, rgba(255,138,43,0.7)), 0 0 42px var(--num-glow2, rgba(255,90,31,0.35));
+    letter-spacing:.02em;
+    transition:color .12s linear, text-shadow .12s linear;
+    filter:blur(var(--num-blur, 0px));
+    transform:scale(var(--num-scale, 1));
+    user-select:text;
+  }
+
+  .readout.glitch{
+    text-shadow:
+      -2px 0 var(--ember-600),
+      2px 0 #4fd6ff,
+      0 0 18px var(--num-glow, rgba(255,138,43,0.7));
+  }
+
+  /* ---------- controls ---------- */
+  .panel{
+    width:100%;
+    display:flex;
+    flex-wrap:wrap;
+    gap:1rem;
+    align-items:flex-end;
+    justify-content:center;
+    background:linear-gradient(180deg, var(--iron-900), var(--iron-950));
+    border:1px solid var(--iron-700);
+    border-radius:14px;
+    padding:1.25rem;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.03), 0 10px 30px rgba(0,0,0,0.35);
+  }
+
+  .field{
+    display:flex;
+    flex-direction:column;
+    gap:.4rem;
+    flex:1 1 100px;
+    min-width:90px;
+  }
+
+  .field label{
+    font-family:var(--font-body);
+    font-size:.68rem;
+    letter-spacing:.2em;
+    text-transform:uppercase;
+    color:var(--ash-500);
+  }
+
+  .field input{
+    font-family:var(--font-mono);
+    font-size:1.15rem;
+    font-variant-numeric:tabular-nums;
+    color:var(--cream-100);
+    background:var(--iron-950);
+    border:1px solid var(--iron-700);
+    border-radius:8px;
+    padding:.55rem .6rem;
+    width:100%;
+    outline:none;
+    transition:border-color .15s ease, box-shadow .15s ease;
+  }
+  .field input:focus-visible{
+    border-color:var(--ember-500);
+    box-shadow:0 0 0 3px rgba(255,138,43,0.25);
+  }
+  .field.invalid input{
+    border-color:var(--danger);
+    animation:shake .32s;
+  }
+
+  .strike{
+    flex:1 1 160px;
+    position:relative;
+    font-family:var(--font-display);
+    font-size:1.05rem;
+    letter-spacing:.08em;
+    color:var(--iron-950);
+    text-transform:uppercase;
+    padding:.9rem 1.2rem;
+    border:none;
+    border-radius:10px;
+    cursor:pointer;
+    background:linear-gradient(180deg, var(--ember-400), var(--ember-600));
+    box-shadow:
+      0 4px 0 var(--brass-700),
+      0 10px 22px rgba(255,90,31,0.35);
+    transition:transform .08s ease, box-shadow .08s ease, filter .15s ease;
+  }
+  .strike:hover{ filter:brightness(1.08); }
+  .strike:active{
+    transform:translateY(3px);
+    box-shadow:0 1px 0 var(--brass-700), 0 4px 10px rgba(255,90,31,0.3);
+  }
+  .strike:disabled{
+    cursor:not-allowed;
+    filter:grayscale(.4) brightness(.85);
+    box-shadow:0 4px 0 var(--iron-700);
+  }
+  .strike:focus-visible{
+    outline:3px solid var(--brass-300);
+    outline-offset:3px;
+  }
+
+  .copy-row{
+    display:flex;
+    align-items:center;
+    gap:.6rem;
+    min-height:1.4rem;
+  }
+  .copy-btn{
+    font-family:var(--font-mono);
+    font-size:.72rem;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--brass-300);
+    background:transparent;
+    border:1px solid var(--iron-700);
+    border-radius:6px;
+    padding:.3rem .6rem;
+    cursor:pointer;
+    transition:border-color .15s ease, color .15s ease;
+  }
+  .copy-btn:hover{ border-color:var(--brass-500); color:var(--brass-500); }
+  .copy-btn:focus-visible{ outline:2px solid var(--brass-300); outline-offset:2px; }
+  .copy-status{
+    font-family:var(--font-mono);
+    font-size:.72rem;
+    color:var(--ember-400);
+    opacity:0;
+    transition:opacity .2s ease;
+  }
+  .copy-status.show{ opacity:1; }
+
+  .error-msg{
+    font-family:var(--font-mono);
+    font-size:.78rem;
+    color:var(--danger);
+    text-align:center;
+    min-height:1em;
+    opacity:0;
+    transition:opacity .15s ease;
+  }
+  .error-msg.show{ opacity:1; }
+
+  /* ---------- history ---------- */
+  .history{
+    width:100%;
+    display:flex;
+    flex-direction:column;
+    gap:.6rem;
+  }
+  .history h2{
+    margin:0;
+    font-family:var(--font-body);
+    font-size:.68rem;
+    letter-spacing:.24em;
+    text-transform:uppercase;
+    color:var(--ash-700);
+    text-align:center;
+  }
+  .plates{
+    display:flex;
+    gap:.6rem;
+    overflow-x:auto;
+    padding:.35rem .1rem .6rem;
+    scrollbar-width:thin;
+    scrollbar-color:var(--iron-700) transparent;
+  }
+  .plates:empty::after{
+    content:'no rolls yet';
+    font-family:var(--font-mono);
+    font-size:.78rem;
+    color:var(--ash-700);
+    margin:0 auto;
+  }
+  .plate{
+    flex:0 0 auto;
+    font-family:var(--font-mono);
+    font-weight:700;
+    font-variant-numeric:tabular-nums;
+    background:var(--iron-900);
+    border:1px solid var(--iron-700);
+    border-top:2px solid var(--brass-700);
+    color:var(--brass-300);
+    border-radius:6px;
+    padding:.45rem .7rem;
+    font-size:.95rem;
+    animation:plate-in .25s ease-out;
+  }
+  @keyframes plate-in{
+    from{ opacity:0; transform:translateY(-6px) scale(.9); }
+    to{ opacity:1; transform:translateY(0) scale(1); }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .stage.shake{ animation:none; }
+    .furnace::before{ animation:none; }
+    #flash.hit{ animation:none; }
+    .plate{ animation:none; }
+  }
+</style>
+
+<canvas id="fx" aria-hidden="true"></canvas>
+<div id="flash" aria-hidden="true"></div>
+
+<main class="app">
+  <p class="eyebrow">Random Number Forge</p>
+  <h1>THE FORGE</h1>
+  <p class="tagline">Set your range, pull the lever, and watch a number cool from white&#8209;hot to solid brass.</p>
+
+  <div class="stage" id="stage">
+    <div class="furnace" id="furnace">
+      <div class="rivet" style="--ang:0deg"></div>
+      <div class="rivet" style="--ang:30deg"></div>
+      <div class="rivet" style="--ang:60deg"></div>
+      <div class="rivet" style="--ang:90deg"></div>
+      <div class="rivet" style="--ang:120deg"></div>
+      <div class="rivet" style="--ang:150deg"></div>
+      <div class="rivet" style="--ang:180deg"></div>
+      <div class="rivet" style="--ang:210deg"></div>
+      <div class="rivet" style="--ang:240deg"></div>
+      <div class="rivet" style="--ang:270deg"></div>
+      <div class="rivet" style="--ang:300deg"></div>
+      <div class="rivet" style="--ang:330deg"></div>
+      <div class="readout" id="readout">&mdash;</div>
+    </div>
+  </div>
+
+  <div class="copy-row">
+    <button class="copy-btn" id="copyBtn" type="button">Copy result</button>
+    <span class="copy-status" id="copyStatus">Copied</span>
+  </div>
+
+  <div class="panel">
+    <div class="field" id="minField">
+      <label for="minInput">Min</label>
+      <input id="minInput" type="number" inputmode="numeric" value="1" step="1">
+    </div>
+    <div class="field" id="maxField">
+      <label for="maxInput">Max</label>
+      <input id="maxInput" type="number" inputmode="numeric" value="100" step="1">
+    </div>
+    <button class="strike" id="strikeBtn" type="button">Strike the Forge</button>
+  </div>
+  <p class="error-msg" id="errorMsg" role="status" aria-live="polite">&nbsp;</p>
+
+  <div class="history">
+    <h2>Past Strikes</h2>
+    <div class="plates" id="plates"></div>
+  </div>
+</main>
+
+<script>
+(function(){
+  "use strict";
+
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var readout = document.getElementById('readout');
+  var furnace = document.getElementById('furnace');
+  var stage = document.getElementById('stage');
+  var minInput = document.getElementById('minInput');
+  var maxInput = document.getElementById('maxInput');
+  var minField = document.getElementById('minField');
+  var maxField = document.getElementById('maxField');
+  var strikeBtn = document.getElementById('strikeBtn');
+  var errorMsg = document.getElementById('errorMsg');
+  var platesWrap = document.getElementById('plates');
+  var flashEl = document.getElementById('flash');
+  var copyBtn = document.getElementById('copyBtn');
+  var copyStatus = document.getElementById('copyStatus');
+
+  var history = [];
+  var currentValue = null;
+  var animating = false;
+
+  function showError(msg){
+    errorMsg.textContent = msg;
+    errorMsg.classList.add('show');
+  }
+  function clearError(){
+    errorMsg.textContent = ' ';
+    errorMsg.classList.remove('show');
+  }
+
+  function flagInvalid(field){
+    field.classList.add('invalid');
+    setTimeout(function(){ field.classList.remove('invalid'); }, 350);
+  }
+
+  function randInt(min, max){
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  function addHistory(value){
+    history.unshift(value);
+    if (history.length > 12) history.pop();
+    renderHistory();
+  }
+
+  function renderHistory(){
+    platesWrap.innerHTML = '';
+    history.forEach(function(v){
+      var p = document.createElement('div');
+      p.className = 'plate';
+      p.textContent = v;
+      platesWrap.appendChild(p);
+    });
+  }
+
+  function setReadoutStyle(progress){
+    // progress: 0 (white hot) -> 1 (cooled / final)
+    var colorStops = [
+      { t:0.0, color:'#fffaf0', glow:'rgba(255,250,240,0.9)', glow2:'rgba(255,194,77,0.6)' },
+      { t:0.45, color:'#ffc24d', glow:'rgba(255,194,77,0.8)', glow2:'rgba(255,90,31,0.45)' },
+      { t:1.0, color:'#ffc24d', glow:'rgba(255,138,43,0.65)', glow2:'rgba(255,90,31,0.3)' }
+    ];
+    var a = colorStops[0], b = colorStops[1];
+    if (progress > 0.45){ a = colorStops[1]; b = colorStops[2]; }
+    var localT = (progress - a.t) / (b.t - a.t || 1);
+    localT = Math.max(0, Math.min(1, localT));
+
+    readout.style.setProperty('--num-color', progress < 0.12 ? a.color : b.color);
+    readout.style.setProperty('--num-glow', b.glow);
+    readout.style.setProperty('--num-glow2', b.glow2);
+    furnace.style.setProperty('--glow-core', progress < 0.5 ? 'rgba(255,250,240,0.55)' : 'rgba(255,90,31,0.35)');
+  }
+
+  function strike(){
+    if (animating) return;
+
+    var min = parseInt(minInput.value, 10);
+    var max = parseInt(maxInput.value, 10);
+
+    var bad = false;
+    if (isNaN(min)){ flagInvalid(minField); bad = true; }
+    if (isNaN(max)){ flagInvalid(maxField); bad = true; }
+    if (bad){ showError('Enter whole numbers for both fields.'); return; }
+    if (min > max){ flagInvalid(minField); flagInvalid(maxField); showError('Min must be less than or equal to Max.'); return; }
+
+    clearError();
+    animating = true;
+    strikeBtn.disabled = true;
+    strikeBtn.textContent = 'Forging…';
+
+    var steps = reduceMotion ? 6 : 22;
+    var i = 0;
+    var finalValue = randInt(min, max);
+
+    function tick(){
+      var progress = i / (steps - 1);
+      var displayVal = (i === steps - 1) ? finalValue : randInt(min, max);
+      readout.textContent = displayVal;
+      setReadoutStyle(progress);
+
+      if (i === steps - 1){
+        finish(finalValue);
+        return;
+      }
+
+      i++;
+      // ease-out timing: fast at first, slows near the end
+      var delay = 35 + Math.pow(i / steps, 2) * 200;
+      setTimeout(tick, delay);
+    }
+
+    tick();
+  }
+
+  function finish(value){
+    currentValue = value;
+    readout.classList.add('glitch');
+    readout.style.setProperty('--num-scale', '1.12');
+
+    if (!reduceMotion){
+      stage.classList.remove('shake');
+      void stage.offsetWidth;
+      stage.classList.add('shake');
+      flashEl.classList.remove('hit');
+      void flashEl.offsetWidth;
+      flashEl.classList.add('hit');
+      spawnBurst();
+    }
+
+    setTimeout(function(){
+      readout.style.setProperty('--num-scale', '1');
+      readout.classList.remove('glitch');
+    }, 260);
+
+    addHistory(value);
+    animating = false;
+    strikeBtn.disabled = false;
+    strikeBtn.textContent = 'Strike the Forge';
+  }
+
+  strikeBtn.addEventListener('click', strike);
+  [minInput, maxInput].forEach(function(el){
+    el.addEventListener('keydown', function(e){
+      if (e.key === 'Enter') strike();
+    });
+  });
+
+  copyBtn.addEventListener('click', function(){
+    if (currentValue === null) return;
+    var text = String(currentValue);
+    function shown(){
+      copyStatus.classList.add('show');
+      setTimeout(function(){ copyStatus.classList.remove('show'); }, 1200);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(shown, shown);
+    } else {
+      shown();
+    }
+  });
+
+  /* ---------------- ambient + burst particle canvas ---------------- */
+  var canvas = document.getElementById('fx');
+  var ctx = canvas.getContext('2d');
+  var W, H, DPR;
+  var ambient = [];
+  var burst = [];
+
+  function resize(){
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    W = window.innerWidth;
+    H = window.innerHeight;
+    canvas.width = W * DPR;
+    canvas.height = H * DPR;
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  function makeEmber(){
+    return {
+      x: Math.random() * W,
+      y: H + Math.random() * 60,
+      r: 1 + Math.random() * 2.2,
+      speed: 0.25 + Math.random() * 0.6,
+      drift: (Math.random() - 0.5) * 0.4,
+      hue: Math.random() < 0.5 ? '255,138,43' : '255,194,77',
+      alpha: 0.15 + Math.random() * 0.35,
+      flicker: Math.random() * Math.PI * 2
+    };
+  }
+
+  var AMBIENT_COUNT = reduceMotion ? 0 : 46;
+  for (var a = 0; a < AMBIENT_COUNT; a++){
+    var e = makeEmber();
+    e.y = Math.random() * H;
+    ambient.push(e);
+  }
+
+  function spawnBurst(){
+    var rect = furnace.getBoundingClientRect();
+    var cx = rect.left + rect.width / 2;
+    var cy = rect.top + rect.height / 2;
+    var count = 70;
+    for (var i = 0; i < count; i++){
+      var angle = Math.random() * Math.PI * 2;
+      var speed = 2 + Math.random() * 6;
+      burst.push({
+        x: cx, y: cy,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed - 1.5,
+        r: 1.5 + Math.random() * 2.5,
+        life: 1,
+        decay: 0.012 + Math.random() * 0.02,
+        hue: Math.random() < 0.5 ? '255,138,43' : (Math.random() < 0.8 ? '255,194,77' : '255,250,240')
+      });
+    }
+  }
+
+  function frame(){
+    ctx.clearRect(0, 0, W, H);
+
+    for (var i = 0; i < ambient.length; i++){
+      var p = ambient[i];
+      p.y -= p.speed;
+      p.x += p.drift;
+      p.flicker += 0.05;
+      if (p.y < -10){
+        Object.assign(p, makeEmber());
+        p.y = H + 10;
+      }
+      var flick = 0.7 + 0.3 * Math.sin(p.flicker);
+      ctx.beginPath();
+      ctx.fillStyle = 'rgba(' + p.hue + ',' + (p.alpha * flick).toFixed(3) + ')';
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    for (var j = burst.length - 1; j >= 0; j--){
+      var b = burst[j];
+      b.x += b.vx;
+      b.y += b.vy;
+      b.vy += 0.14;
+      b.vx *= 0.98;
+      b.life -= b.decay;
+      if (b.life <= 0){ burst.splice(j, 1); continue; }
+      ctx.beginPath();
+      ctx.fillStyle = 'rgba(' + b.hue + ',' + Math.max(b.life, 0).toFixed(3) + ')';
+      ctx.arc(b.x, b.y, b.r * b.life, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  clearError();
+})();
+</script>
