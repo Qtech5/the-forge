@@ -367,11 +367,72 @@
     .furnace::before{ animation:none; }
     #flash.hit{ animation:none; }
     .plate{ animation:none; }
+    body.bigshake{ animation:none; }
+    .jumpscare.active{ animation:none; }
+    .jumpscare.active .jumpscare-face{ animation:none; }
+  }
+
+  /* ---------- hidden 23-387 jumpscare ---------- */
+  @keyframes bigshake{
+    10%,90%{ transform:translate3d(-6px,3px,0) rotate(-.5deg); }
+    20%,80%{ transform:translate3d(10px,-6px,0) rotate(.5deg); }
+    30%,50%,70%{ transform:translate3d(-14px,8px,0) rotate(-1deg); }
+    40%,60%{ transform:translate3d(14px,-8px,0) rotate(1deg); }
+  }
+  body.bigshake{ animation:bigshake .5s cubic-bezier(.36,.07,.19,.97); }
+
+  .jumpscare{
+    position:fixed;
+    inset:0;
+    z-index:20;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#000;
+    opacity:0;
+    pointer-events:none;
+  }
+  .jumpscare.active{ animation:jumpFlash .9s steps(1,end) forwards; }
+  .jumpscare.active-reduced{
+    opacity:1;
+    transition:opacity .3s ease;
+  }
+  .jumpscare-face{
+    font-size:min(60vw, 60vh);
+    line-height:1;
+    filter:drop-shadow(0 0 40px rgba(255,0,0,0.85));
+    transform:scale(.1);
+    opacity:0;
+  }
+  .jumpscare.active .jumpscare-face{
+    animation:facePop .9s cubic-bezier(.2,1.4,.4,1) forwards;
+  }
+  .jumpscare.active-reduced .jumpscare-face{
+    opacity:1;
+    transform:scale(1);
+    transition:opacity .3s ease, transform .3s ease;
+  }
+  @keyframes jumpFlash{
+    0%{ opacity:0; background:#000; }
+    4%{ opacity:1; background:#8a0000; }
+    10%{ opacity:1; background:#000; }
+    14%{ opacity:1; background:#8a0000; }
+    20%{ opacity:1; background:#000; }
+    78%{ opacity:1; background:#000; }
+    100%{ opacity:0; background:#000; }
+  }
+  @keyframes facePop{
+    0%{ transform:scale(.1) rotate(-8deg); opacity:0; }
+    8%{ transform:scale(1.5) rotate(4deg); opacity:1; }
+    16%{ transform:scale(1) rotate(0deg); opacity:1; }
+    80%{ transform:scale(1); opacity:1; }
+    100%{ transform:scale(1.1); opacity:0; }
   }
 </style>
 
 <canvas id="fx" aria-hidden="true"></canvas>
 <div id="flash" aria-hidden="true"></div>
+<div id="jumpscare" class="jumpscare" aria-hidden="true"><div class="jumpscare-face">👹</div></div>
 
 <main class="app">
   <p class="eyebrow">Random Number Forge</p>
@@ -437,6 +498,7 @@
   var errorMsg = document.getElementById('errorMsg');
   var platesWrap = document.getElementById('plates');
   var flashEl = document.getElementById('flash');
+  var jumpscareEl = document.getElementById('jumpscare');
   var copyBtn = document.getElementById('copyBtn');
   var copyStatus = document.getElementById('copyStatus');
 
@@ -513,6 +575,15 @@
     strikeBtn.disabled = true;
     strikeBtn.textContent = 'Forging…';
 
+    // secret range that wakes something up in the furnace
+    if (min === 23 && max === 387){
+      jumpscare(function(){ runRoulette(min, max); });
+    } else {
+      runRoulette(min, max);
+    }
+  }
+
+  function runRoulette(min, max){
     var steps = reduceMotion ? 6 : 22;
     var i = 0;
     var finalValue = randInt(min, max);
@@ -535,6 +606,83 @@
     }
 
     tick();
+  }
+
+  function playJumpscareSound(){
+    try{
+      var AudioCtx = window.AudioContext || window.webkitAudioContext;
+      var ctx = new AudioCtx();
+      var now = ctx.currentTime;
+
+      var master = ctx.createGain();
+      master.gain.setValueAtTime(0.0001, now);
+      master.gain.exponentialRampToValueAtTime(0.9, now + 0.015);
+      master.gain.exponentialRampToValueAtTime(0.0001, now + 0.9);
+      master.connect(ctx.destination);
+
+      var bufferSize = Math.floor(ctx.sampleRate * 0.9);
+      var buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      var data = buffer.getChannelData(0);
+      for (var n = 0; n < bufferSize; n++){ data[n] = Math.random() * 2 - 1; }
+      var noise = ctx.createBufferSource();
+      noise.buffer = buffer;
+      var noiseFilter = ctx.createBiquadFilter();
+      noiseFilter.type = 'bandpass';
+      noiseFilter.frequency.setValueAtTime(1800, now);
+      noiseFilter.frequency.exponentialRampToValueAtTime(200, now + 0.7);
+      noiseFilter.Q.value = 0.7;
+      noise.connect(noiseFilter).connect(master);
+      noise.start(now);
+      noise.stop(now + 0.9);
+
+      var stinger = ctx.createOscillator();
+      stinger.type = 'sawtooth';
+      stinger.frequency.setValueAtTime(1400, now);
+      stinger.frequency.exponentialRampToValueAtTime(60, now + 0.5);
+      var stingerGain = ctx.createGain();
+      stingerGain.gain.setValueAtTime(0.8, now);
+      stingerGain.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
+      stinger.connect(stingerGain).connect(master);
+      stinger.start(now);
+      stinger.stop(now + 0.6);
+
+      var detune = ctx.createOscillator();
+      detune.type = 'square';
+      detune.frequency.setValueAtTime(1500 * 1.06, now);
+      detune.frequency.exponentialRampToValueAtTime(65, now + 0.5);
+      var detuneGain = ctx.createGain();
+      detuneGain.gain.setValueAtTime(0.5, now);
+      detuneGain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+      detune.connect(detuneGain).connect(master);
+      detune.start(now);
+      detune.stop(now + 0.55);
+    } catch(e){ /* Web Audio unavailable; scare proceeds silently */ }
+  }
+
+  function jumpscare(callback){
+    playJumpscareSound();
+
+    if (reduceMotion){
+      jumpscareEl.classList.add('active-reduced');
+      setTimeout(function(){
+        jumpscareEl.classList.remove('active-reduced');
+        callback();
+      }, 650);
+      return;
+    }
+
+    jumpscareEl.classList.remove('active');
+    void jumpscareEl.offsetWidth;
+    jumpscareEl.classList.add('active');
+    document.body.classList.remove('bigshake');
+    void document.body.offsetWidth;
+    document.body.classList.add('bigshake');
+
+    setTimeout(function(){ document.body.classList.remove('bigshake'); }, 500);
+    setTimeout(function(){
+      jumpscareEl.classList.remove('active');
+      callback();
+    }, 900);
   }
 
   function finish(value){
