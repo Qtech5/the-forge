@@ -1,0 +1,530 @@
+<title>So You Are Ethan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Oswald:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap">
+<style>
+  :root{
+    --iron-950:#150f0b;
+    --iron-900:#231810;
+    --iron-800:#372820;
+    --iron-700:#4a352a;
+    --brass-300:#e9c48a;
+    --brass-500:#c1934f;
+    --cream-100:#f6ecdd;
+    --ash-500:#a8998a;
+    --ash-700:#6f6157;
+    --discord-blurple:#5865f2;
+    --discord-dark:#2b2d31;
+    --discord-darker:#1e1f22;
+    --fg-red:#c8102e;
+    --fg-red-dark:#8f0b21;
+    --fg-cream:#fff8f0;
+    --font-display:'Bungee', 'Arial Black', sans-serif;
+    --font-body:'Oswald', 'Helvetica Neue', sans-serif;
+    --font-mono:'Space Mono', 'Courier New', monospace;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+
+  body{
+    background:var(--iron-950);
+    color:var(--cream-100);
+    font-family:var(--font-body);
+    overflow-x:hidden;
+  }
+
+  #progress-wrap{
+    position:fixed;
+    top:0; left:0; right:0;
+    height:6px;
+    background:var(--iron-900);
+    z-index:50;
+    display:flex;
+    align-items:center;
+  }
+  #progress-bar{
+    height:100%;
+    width:0%;
+    background:linear-gradient(90deg, var(--fg-red), var(--discord-blurple));
+    transition:width .05s linear;
+  }
+  #progress-text{
+    position:fixed;
+    top:10px; right:14px;
+    z-index:50;
+    font-family:var(--font-mono);
+    font-size:.7rem;
+    letter-spacing:.1em;
+    color:var(--ash-500);
+    background:rgba(21,15,11,0.7);
+    padding:.2rem .5rem;
+    border-radius:4px;
+  }
+
+  .back-link{
+    position:fixed;
+    top:10px; left:14px;
+    z-index:50;
+    font-family:var(--font-mono);
+    font-size:.68rem;
+    letter-spacing:.05em;
+    color:var(--ash-500);
+    text-decoration:none;
+    background:rgba(21,15,11,0.7);
+    padding:.2rem .5rem;
+    border-radius:4px;
+  }
+  .back-link:hover{ color:var(--brass-300); }
+
+  #toast{
+    position:fixed;
+    bottom:22px;
+    left:50%;
+    transform:translateX(-50%) translateY(20px);
+    z-index:50;
+    font-family:var(--font-mono);
+    font-size:.8rem;
+    color:var(--cream-100);
+    background:var(--iron-900);
+    border:1px solid var(--iron-700);
+    padding:.6rem 1rem;
+    border-radius:8px;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .3s ease, transform .3s ease;
+    max-width:min(80vw, 360px);
+    text-align:center;
+  }
+  #toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+  .hero{
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:2rem 1.25rem;
+    gap:1rem;
+  }
+  .hero .eyebrow{
+    font-family:var(--font-mono);
+    font-size:.72rem;
+    letter-spacing:.32em;
+    text-transform:uppercase;
+    color:var(--brass-300);
+  }
+  .hero h1{
+    font-family:var(--font-display);
+    font-size:clamp(2rem, 9vw, 3.4rem);
+    margin:0;
+    text-wrap:balance;
+    text-shadow:0 0 20px rgba(200,16,46,0.35);
+  }
+  .hero .sub{
+    max-width:38ch;
+    color:var(--ash-500);
+    font-size:1rem;
+  }
+  .scroll-cue{
+    margin-top:1.5rem;
+    font-family:var(--font-mono);
+    font-size:.8rem;
+    color:var(--ash-700);
+    animation:bob 1.6s ease-in-out infinite;
+  }
+  @keyframes bob{
+    0%,100%{ transform:translateY(0); }
+    50%{ transform:translateY(8px); }
+  }
+
+  #feed{
+    max-width:560px;
+    margin:0 auto;
+    padding:1rem 1rem 2rem;
+    display:flex;
+    flex-direction:column;
+    gap:1rem;
+  }
+
+  .card{
+    border-radius:12px;
+    overflow:hidden;
+    animation:card-in .4s ease-out both;
+  }
+  @keyframes card-in{
+    from{ opacity:0; transform:translateY(10px); }
+    to{ opacity:1; transform:translateY(0); }
+  }
+
+  /* discord mod card */
+  .card.mod{
+    display:flex;
+    gap:.9rem;
+    align-items:flex-start;
+    background:var(--discord-dark);
+    border:1px solid var(--discord-darker);
+    border-left:4px solid var(--discord-blurple);
+    padding:1rem;
+  }
+  .avatar{
+    flex:0 0 auto;
+    width:52px; height:52px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:var(--font-display);
+    font-size:1.3rem;
+    color:#fff;
+    background:linear-gradient(140deg, hsl(var(--hue,230),70%,60%), hsl(calc(var(--hue,230) + 40),70%,40%));
+  }
+  .card-top{
+    display:flex;
+    align-items:center;
+    gap:.5rem;
+    flex-wrap:wrap;
+  }
+  .uname{
+    font-family:var(--font-mono);
+    font-weight:700;
+    color:#fff;
+    font-size:.92rem;
+  }
+  .badge{
+    font-family:var(--font-mono);
+    font-size:.6rem;
+    letter-spacing:.1em;
+    background:var(--discord-blurple);
+    color:#fff;
+    padding:.12rem .4rem;
+    border-radius:4px;
+  }
+  .bio{
+    margin:.4rem 0;
+    font-size:.85rem;
+    color:#c9cad1;
+    line-height:1.4;
+  }
+  .stats{
+    display:flex;
+    gap:1rem;
+    font-family:var(--font-mono);
+    font-size:.68rem;
+    color:#8b8d97;
+    font-variant-numeric:tabular-nums;
+  }
+
+  /* five guys card */
+  .card.fg{
+    background:var(--fg-red);
+    color:var(--fg-cream);
+    padding:1rem 1.1rem 0;
+  }
+  .fg-badge{
+    font-family:var(--font-display);
+    font-size:1.15rem;
+    letter-spacing:.02em;
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:.5rem;
+  }
+  .fg-badge span{
+    font-family:var(--font-mono);
+    font-size:.7rem;
+    background:var(--fg-red-dark);
+    padding:.15rem .4rem;
+    border-radius:4px;
+  }
+  .fg-slogan{
+    font-style:italic;
+    font-size:.95rem;
+    margin:.7rem 0 .5rem;
+    line-height:1.4;
+  }
+  .fg-meta{
+    display:flex;
+    justify-content:space-between;
+    font-family:var(--font-mono);
+    font-size:.68rem;
+    color:#ffd7d7;
+    margin-bottom:.6rem;
+  }
+  .fg-checker{
+    height:14px;
+    background-image:repeating-conic-gradient(var(--fg-cream) 0% 25%, var(--fg-red-dark) 0% 50%);
+    background-size:20px 20px;
+    margin:0 -1.1rem;
+  }
+
+  .finale{
+    position:relative;
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+    background:radial-gradient(circle at 50% 50%, rgba(200,16,46,0.25), transparent 60%), var(--iron-950);
+  }
+  #confetti{
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+  }
+  .finale-inner{
+    position:relative;
+    z-index:1;
+    text-align:center;
+    padding:2rem;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:1rem;
+  }
+  .boomerang{
+    font-size:5rem;
+    animation:spin 2.2s linear infinite;
+  }
+  .finale h2{
+    font-family:var(--font-display);
+    font-size:clamp(2rem, 9vw, 3.2rem);
+    margin:0;
+    color:var(--brass-300);
+    text-shadow:0 0 30px rgba(233,196,138,0.5);
+    text-wrap:balance;
+  }
+  .finale p{
+    color:var(--ash-500);
+    max-width:36ch;
+  }
+  .back-link-2{
+    margin-top:.5rem;
+    font-family:var(--font-mono);
+    font-size:.78rem;
+    color:var(--brass-300);
+    border:1px solid var(--iron-700);
+    padding:.5rem 1rem;
+    border-radius:8px;
+    text-decoration:none;
+  }
+  .back-link-2:hover{ border-color:var(--brass-500); }
+
+  @keyframes spin{
+    from{ transform:rotate(0deg); }
+    to{ transform:rotate(360deg); }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .scroll-cue{ animation:none; }
+    .card{ animation:none; }
+    .boomerang{ animation:none; }
+    #toast{ transition:none; }
+  }
+</style>
+
+<div id="progress-wrap"><div id="progress-bar"></div></div>
+<span id="progress-text">0%</span>
+<a class="back-link" href="index.html">&larr; Back to the Forge</a>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<main>
+  <section class="hero">
+    <p class="eyebrow">A Very Specific Initiation</p>
+    <h1>SO YOU ARE ETHAN</h1>
+    <p class="sub">Scroll. Do not stop. Do not skip ahead. The bottom is real, but it is far, and it is full of Discord mods and Five Guys locations.</p>
+    <div class="scroll-cue">&darr; keep going &darr;</div>
+  </section>
+
+  <div id="feed"></div>
+
+  <section class="finale" id="finale">
+    <canvas id="confetti" aria-hidden="true"></canvas>
+    <div class="finale-inner">
+      <div class="boomerang" aria-hidden="true">&#129386;</div>
+      <h2>BOOMERANG FU</h2>
+      <p>You made it, Ethan. This was always going to end here.</p>
+      <a class="back-link-2" href="index.html">Return to the Forge</a>
+    </div>
+  </section>
+</main>
+
+<script>
+(function(){
+  "use strict";
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var MOD_PREFIX = ['xX_','Lord_','Sergeant_','Definitely_Not_A_','The_Real_','Big_','Local_','Certified_','Angry_','Sleep_Deprived_','Unofficial_','Senior_'];
+  var MOD_CORE = ['ShadowBan','RuleEnforcer','ChatPolice','NightOwl','Watcher','Gatekeeper','ServerDad','VibeCheck','Moderator','BanHammer','PingSlayer','WelcomeBot','Insomniac','CaffeineGoblin','Overseer','RuleOfLaw','TimeoutKing'];
+  var MOD_SUFFIX = ['_Xx','92','_MOD','007','_TTV','_YT','','_69','_III','_Prime','_v2',''];
+  var MOD_BIOS = [
+    'Keeps the chat PG since 2019.',
+    'Types "this isn’t the place for that" 40x a day.',
+    'Has muted a mutual of yours. Cannot say who.',
+    'Joined the server to make friends. Stayed for the power.',
+    'Runs on 3 hours of sleep and pure vigilance.',
+    'Has a spreadsheet of everyone’s warnings.',
+    'Once banned someone for using too many emoji.',
+    'Genuinely believes the rules channel gets read.',
+    'Their DMs are always open. Please don’t.',
+    'Promoted to mod for showing up at 3am consistently.',
+    'Has strong opinions about off-topic channels.',
+    'Still hasn’t forgiven the great raid of 2022.'
+  ];
+
+  var FG_SLOGANS = [
+    'Two Fresh Beef Patties. Zero Reasons Given.',
+    'Cajun Fries: A Cry for Help.',
+    'We Don’t Have a Freezer. We Have Trust Issues.',
+    'Free Peanuts While You Wait 45 Minutes.',
+    'Every Location Looks Exactly the Same on Purpose.',
+    'Little Fry, Regular Fry, Unreasonable Fry.',
+    'The Bag Is Always Too Heavy. That Is the Point.',
+    'We Put the Extra Fries In For Legal Reasons.',
+    'No Freezers, No Microwaves, No Chill.',
+    'Voted Most Likely To Ruin Your Diet, Again.',
+    'Grilled Cheese Is On the Menu If You Know To Ask.',
+    'Our Milkshakes Have Never Once Made Sense Pricewise.'
+  ];
+  var FG_CITIES = ['Ashburn','Reston','Tysons','Sterling','Chantilly','Fairfax','Leesburg','Herndon','Vienna','Manassas','Centreville','Springfield'];
+
+  function pick(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
+  function randInt(a,b){ return Math.floor(Math.random() * (b - a + 1)) + a; }
+
+  function buildModCard(){
+    var name = pick(MOD_PREFIX) + pick(MOD_CORE) + pick(MOD_SUFFIX);
+    var hue = randInt(0, 360);
+    var card = document.createElement('article');
+    card.className = 'card mod';
+    card.innerHTML =
+      '<div class="avatar" style="--hue:' + hue + '">' + name.replace(/[^A-Za-z]/g,'').charAt(0).toUpperCase() + '</div>' +
+      '<div class="card-body">' +
+        '<div class="card-top"><span class="uname">' + name + '</span><span class="badge">MOD</span></div>' +
+        '<p class="bio">' + pick(MOD_BIOS) + '</p>' +
+        '<div class="stats"><span>' + randInt(3, 480) + ' warnings issued</span><span>Mod since ' + randInt(2016, 2024) + '</span></div>' +
+      '</div>';
+    return card;
+  }
+
+  function buildFgCard(){
+    var card = document.createElement('article');
+    card.className = 'card fg';
+    card.innerHTML =
+      '<div class="fg-badge">FIVE GUYS <span>#' + randInt(1000, 9999) + '</span></div>' +
+      '<p class="fg-slogan">“' + pick(FG_SLOGANS) + '”</p>' +
+      '<div class="fg-meta"><span>' + pick(FG_CITIES) + '</span><span>' + randInt(120, 900) + ' burgers/day</span></div>' +
+      '<div class="fg-checker"></div>';
+    return card;
+  }
+
+  var feed = document.getElementById('feed');
+  var frag = document.createDocumentFragment();
+  var COUNT = 220;
+  for (var i = 0; i < COUNT; i++){
+    frag.appendChild(Math.random() < 0.5 ? buildModCard() : buildFgCard());
+  }
+  feed.appendChild(frag);
+
+  /* ---------------- progress bar + milestone toasts ---------------- */
+  var bar = document.getElementById('progress-bar');
+  var text = document.getElementById('progress-text');
+  var toast = document.getElementById('toast');
+  var milestones = [
+    { at: 10, msg: 'Ethan, this is only 10%.' },
+    { at: 25, msg: 'A quarter of the way. It does not get faster.' },
+    { at: 50, msg: 'Halfway. The mods do not stop. Neither do the Five Guys.' },
+    { at: 75, msg: 'Three quarters. You could have made a sandwich by now.' },
+    { at: 90, msg: 'Almost there. Boomerang Fu is close.' },
+    { at: 99, msg: 'This is it. Breathe.' }
+  ];
+  var hit = {};
+  var toastTimer = null;
+
+  function showToast(msg){
+    if (reduceMotion){ toast.textContent = msg; toast.classList.add('show'); return; }
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ toast.classList.remove('show'); }, 2600);
+  }
+
+  function onScroll(){
+    var max = document.documentElement.scrollHeight - window.innerHeight;
+    var pct = max > 0 ? Math.min(100, Math.max(0, (window.scrollY / max) * 100)) : 100;
+    bar.style.width = pct + '%';
+    text.textContent = Math.round(pct) + '%';
+    milestones.forEach(function(m){
+      if (!hit[m.at] && pct >= m.at){
+        hit[m.at] = true;
+        showToast(m.msg);
+      }
+    });
+  }
+  document.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  /* ---------------- finale confetti burst ---------------- */
+  var canvas = document.getElementById('confetti');
+  var ctx = canvas.getContext('2d');
+  var particles = [];
+  var fired = false;
+
+  function resize(){
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  function burst(){
+    var cx = canvas.width / 2;
+    var cy = canvas.height / 2;
+    var colors = ['200,16,46', '88,101,242', '233,196,138', '246,236,221'];
+    for (var i = 0; i < 140; i++){
+      var angle = Math.random() * Math.PI * 2;
+      var speed = 2 + Math.random() * 7;
+      particles.push({
+        x: cx, y: cy,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed - 2,
+        r: 2 + Math.random() * 3,
+        life: 1,
+        decay: 0.008 + Math.random() * 0.012,
+        color: colors[Math.floor(Math.random() * colors.length)]
+      });
+    }
+  }
+
+  function frame(){
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (var i = particles.length - 1; i >= 0; i--){
+      var p = particles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.1;
+      p.life -= p.decay;
+      if (p.life <= 0){ particles.splice(i, 1); continue; }
+      ctx.beginPath();
+      ctx.fillStyle = 'rgba(' + p.color + ',' + Math.max(p.life, 0).toFixed(3) + ')';
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  if (!reduceMotion && 'IntersectionObserver' in window){
+    var finale = document.getElementById('finale');
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if (entry.isIntersecting && !fired){
+          fired = true;
+          burst();
+          setTimeout(burst, 500);
+        }
+      });
+    }, { threshold: 0.4 });
+    io.observe(finale);
+  }
+})();
+</script>

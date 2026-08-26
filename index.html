@@ -312,6 +312,23 @@
   }
   .error-msg.show{ opacity:1; }
 
+  .ethan-btn{
+    align-self:center;
+    font-family:var(--font-mono);
+    font-size:.7rem;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--ash-500);
+    background:transparent;
+    border:1px dashed var(--iron-700);
+    border-radius:6px;
+    padding:.4rem .8rem;
+    text-decoration:none;
+    transition:border-color .15s ease, color .15s ease;
+  }
+  .ethan-btn:hover{ border-color:var(--brass-500); color:var(--brass-300); }
+  .ethan-btn:focus-visible{ outline:2px solid var(--brass-300); outline-offset:2px; }
+
   /* ---------- history ---------- */
   .history{
     width:100%;
@@ -479,6 +496,8 @@
     <h2>Past Strikes</h2>
     <div class="plates" id="plates"></div>
   </div>
+
+  <a class="ethan-btn" href="ethan.html" target="_blank" rel="noopener">Press if you are Ethan</a>
 </main>
 
 <script>
